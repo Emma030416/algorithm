@@ -1,3 +1,19 @@
+dfs模板小总结：
+
+```cpp
+void dfs(int x) {
+	if(...) {
+		输出结果
+		return ;
+	}
+	一种情况
+	dfs(x + 1); // 递归
+	另一种情况
+}
+```
+
+
+
 # P1255 数楼梯
 
 https://www.luogu.com.cn/problem/P1255
@@ -194,6 +210,8 @@ int main() {
 
 # P1706 全排列问题
 
+https://www.luogu.com.cn/problem/P1706
+
 ### 解析
 
 strcmp 方法比较两个字符串，按照字典序比较
@@ -276,6 +294,8 @@ int main() {
 
 
 # P1157 组合的输出
+
+https://www.luogu.com.cn/problem/P1157
 
 ### 解答
 
@@ -367,9 +387,40 @@ int main() {
 
 
 
+# P1036 [NOIP 2002 普及组] 选数
+
+https://www.luogu.com.cn/problem/P1036
 
 
 
+
+
+
+
+
+
+```cpp
+#include<iostream>
+
+using namespace std;
+
+const int N = 21;
+
+int n, k;
+
+void dfs() {
+    
+
+
+    
+}
+
+int main() {
+    scanf("%d %d", &n, &k);
+    dfs(1);
+    return 0;
+}
+```
 
 
 
