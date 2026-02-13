@@ -1,16 +1,49 @@
 dfs模板小总结：
 
 ```cpp
+// 如果每次只判断当前这一个位置/当前这一个数
 void dfs(int x) {
 	if(...) {
 		输出结果
 		return ;
 	}
+    
 	一种情况
-	dfs(x + 1); // 递归
+    状态变化
+    dfs(x + 1); 
+        
 	另一种情况
+    状态回溯
+    dfs(x + 1);     
 }
 ```
+
+```cpp
+// 内部有for循环遍历
+void dfs(int x) {
+    if(...) {
+        输出结果
+		return ;
+    }
+    for(int i = ...; i <= n; i++) {
+        if(st[i]) { 
+			一种情况
+            状态变化
+            dfs(x + 1);
+            
+            另一种情况
+            状态回溯 // 不用再dfs(x + 1)了
+        }
+    }  
+}
+```
+
+**顺序：**
+
+1. **按位置枚举：每个位置放哪个数**
+2. **按数枚举：每个数放哪个位置**
+
+写 dfs 函数前一定要先确定顺序
 
 
 
@@ -140,7 +173,7 @@ https://www.acwing.com/problem/content/94/
 
 ### 解析
 
-每种数字都有选 / 不选两种可能，一共 2ⁿ 种
+每种数字都有选 / 不选两种可能，一共 2ⁿ 种，属于指数型（每个数之间没有关系）
 
 一样的，我们可以画递归树，树的两支分别是该数 选 和 不选
 
@@ -218,8 +251,8 @@ strcmp 方法比较两个字符串，按照字典序比较
 
 **顺序：**
 
-1. **依次枚举每个位置放哪个数（按位置枚举）**
-2. **依次枚举每个数放哪个位置（按数枚举）**
+1. **按位置枚举：每个位置放哪个数**
+2. **按数枚举：每个数放哪个位置**
 
 我们以第一种为例，依次枚举每个位置放哪个数。
 
@@ -296,8 +329,6 @@ int main() {
 # P1157 组合的输出
 
 https://www.luogu.com.cn/problem/P1157
-
-### 解答
 
 还是有两种枚举顺序。
 
@@ -391,36 +422,275 @@ int main() {
 
 https://www.luogu.com.cn/problem/P1036
 
+第一种，**按位置枚举**，每个位置放哪个数。
 
-
-
-
-
-
-
+**选数本质是组合，不能再回头选，否则可能会重复，比如 (3, 7) 和 (7, 3)，因此每次可选的数只能是从 start 开始往后！**
 
 ```cpp
 #include<iostream>
+#include<cmath>
 
 using namespace std;
 
 const int N = 21;
 
 int n, k;
+int q[N]; // 存输入的n个数
+int num[N]; // 存最后选择的k个数
+int ans = 0;
 
-void dfs() {
+bool isPrime(int sum) {
+    if(sum == 1) return false;
+    if(sum == 2) return true;
+    if(sum % 2 == 0) return false;
+    for(int i = 3; i <= sqrt(sum); i += 2) {
+        if(sum % i == 0) return false;
+    }
+    return true;
+}
+
+void dfs(int x, int start) {
+    // 剪枝
+    if(x + n - start < k) return ;   
     
-
-
+    if(x > k) { // 这里x表示当前选到哪个位置了，x = k 表示正准备选第k个数，但还没有选，所以是x > k
+        int sum = 0;
+        for(int i = 1; i <= k; i++) sum += num[i];
+        if(isPrime(sum)) ans++;
+        return ;
+    }   
     
+    for(int i = start; i <= n; i++) { // 从start开始，不能再回头选
+        num[x] = q[i]; // 选
+        dfs(x + 1, i + 1);
+        num[x] = 0;
+    }
 }
 
 int main() {
     scanf("%d %d", &n, &k);
+    for(int i = 1; i <= n; i++) {
+        scanf("%d", &q[i]);
+    }
+    dfs(1, 1);
+    printf("%d", ans); 
+    return 0;
+}
+```
+
+注意：这题加了**剪枝**！
+
+什么情况可以直接剪掉？前面已经大致解释过了，**已选数的个数 + 可选数的个数  < 总共要选的数的个数**，也就是数不够了。
+
+当正在考虑 x 这个位置时，已选数的个数为 x - 1，可选数的个数为 n - start + 1。
+
+**剪枝用时会更短**，在时间复杂度本身就很大的情况下更明显。前面的题都是加剪枝更好。
+
+------
+
+第二种，**按数枚举**，每个数选不选。
+
+一个 isPrime 函数，判断结果是否为素数。
+
+一个 dfs 函数：桉数枚举，每次只判断当前这个数选还是不选，然后下一个数直接 dfs(x + 1) 递归。
+
+如果选的话 sum += q[i]，已选数的个数 cnt++，如果不选的话两个变量回溯！
+
+**再次强调，不选的话，所有选的时候变化了的变量都要回溯，恢复为原状态！**
+
+条件就是如果 cnt == k ，且 sum 为素数，则 ans++。
+
+然后如果 x > n，但没有选够 k 个数，直接 return ；
+
+```cpp
+#include<iostream>
+#include<cmath>
+
+using namespace std;
+
+const int N = 21;
+
+int n, k;
+int q[N]; // 存储所有的数
+int sum = 0, cnt = 0, ans = 0; // sum记录和，cnt记录已选的数有多少个，ans记录最后有多少种组合满足要求（输出）
+
+bool isPrime(int num) {
+    if(num == 1) return false;
+    if(num == 2) return true;
+    if(num % 2 == 0) return false;
+    for(int i = 3; i <= sqrt(num); i += 2) {
+        if(num % i == 0) return false;
+    }
+    return true;
+}
+
+void dfs(int x) { // 记录枚举到哪个数了
+    if(cnt == k) {
+        if(isPrime(sum)) {
+            ans++;
+        }
+        return ;
+    }
+    if(x > n) {
+        return ;
+    }
+    sum += q[x]; cnt++;// 选
+    dfs(x + 1);
+    sum -= q[x]; cnt--; // 不选
+    dfs(x + 1);
+}
+
+int main() {
+    scanf("%d %d", &n, &k);
+    for(int i = 1; i <= n; i++) {
+        scanf("%d", &q[i]);
+    }
     dfs(1);
+    printf("%d", ans);
     return 0;
 }
 ```
 
 
+
+# P2089 烤鸡
+
+https://www.luogu.com.cn/problem/P2089
+
+简单，稍微注意一下细节就行。
+
+每种调料都是 1~3 克，所以范围是 10~30，先把不符合范围的叉出去。这个写在 main 里面，输入完就判断。
+
+然后就是输出顺序的问题，如果在 dfs 里输出方案，那么每枚举完一种就会输出，最后才会回到 main 里输出总方案数 ans。
+
+但题目要求先输出 ans，所以方案也要在 main 里输出，也就是要先用一个数组把所有方案都记录下来。
+
+已经有一个数组 arr 用来记录当前方案每个位置的数了，我们可以再用一个**二维数组 mem [第几个方案] [当前方案]** 来记录所有方案。
+
+------
+
+第一种，按位置枚举，每种调料放多少克（1~3）。
+
+```cpp
+#include<iostream>
+
+using namespace std;
+
+const int N = 11;
+    
+int n;
+int arr[N]; // 当前方案
+int ans = 0; // 方案数
+int mem[59049][N]; // 所有方案
+
+void dfs(int x, int sum) { // sum表示当前美味程度
+    if(sum > n) return ; // 剪枝
+    
+    if(x > 10) {
+        if(sum == n) {
+            ans++;
+            for(int i = 1; i <= 10; i++) {
+                mem[ans][i] = arr[i];
+            }
+        }
+        return ;
+    }
+    
+    for(int i = 1; i <= 3; i++) { // 三种可选
+        arr[x] = i; // 选
+        dfs(x + 1, sum + i);
+        arr[x] = 0; // 不选
+    }  
+}
+
+int main() {
+    scanf("%d", &n);
+    if(n < 10 || n > 30) { // 放main函数里直接return 0，不要放dfs里每次都来一遍
+        printf("0"); 
+        return 0;
+    }
+    dfs(1, 0);
+    printf("%d\n", ans);
+    for(int i = 1; i <= ans; i++) {
+        for(int j = 1; j <= 10; j++) {
+            printf("%d", mem[i][j]);
+            if(j != 10) printf(" ");
+        }
+        printf("\n");
+    }
+    return 0;
+}
+```
+
+------
+
+第二种，枚举每种克数放哪几种调料。
+
+
+
+# P1088 [NOIP 2004 普及组] 火星人
+
+https://www.luogu.com.cn/problem/P1088
+
+这题也简单，关键是题意理解。我们到底要干啥：
+
+1. 先找到初始排列（输入的 mars）
+2. 然后继续往后生成排列，找到它后面的第 m 个排列
+
+我们按位置枚举，每个位置选哪个数。
+
+```cpp
+#include<iostream>
+
+using namespace std;
+
+const int N = 10010;
+
+int n, m;
+int arr[N]; // 记录方案
+int mars[N]; // 记录火星人的初始排列（输入）
+bool st[N]; // true表示被选了，false表示没被选
+int add = 0; // 记录这是初始排列加几后的方案
+
+void dfs(int x) {
+    if(x > n) {
+        add++;
+        if(add == m + 1) { 
+            for(int i = 1; i <= n; i++) {
+                printf("%d", arr[i]);
+                if(i != n) printf(" ");
+            }
+            exit(0);
+        }
+        return ;
+    }
+    
+    for(int i = 1; i <= n; i++) {
+        // add = 0，先找到初始序列（输入的）
+        if(!add) {
+            i = mars[x];
+        } 
+        if(!st[i]) {
+            arr[x] = i; st[i] = true; // 选
+            dfs(x + 1);
+            arr[x] = 0; st[i] = false; // 不选  
+        }
+    }
+}
+
+int main() {
+    scanf("%d %d", &n, &m);
+    for(int i = 1; i <= n; i++) {
+        scanf("%d", &mars[i]);
+    }
+    dfs(1);
+    return 0;
+}
+```
+
+细节：**加 exit(0)**，找到了输出完了就立即退出程序，否则会超时。
+
+
+
+没懂，我觉得是add == m？明天看。
 
