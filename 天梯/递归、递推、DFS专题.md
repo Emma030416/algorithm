@@ -690,7 +690,150 @@ int main() {
 
 细节：**加 exit(0)**，找到了输出完了就立即退出程序，否则会超时。
 
+没懂，我觉得是 add == m？
 
 
-没懂，我觉得是add == m？明天看。
+
+# P1149 [NOIP 2008 提高组] 火柴棒等式
+
+https://www.luogu.com.cn/problem/P1149
+
+我们按位置枚举，每个位置放哪个数。
+
+要形成 A + B = C 的等式，+ 需要 2 根，= 需要 2 根，所以剩下的 A、B、C 三个数一共是 n - 4 根。
+
+也就是有 3 个位置，每个位置可以选 0~9 这些数字。需要满足两个条件：A + B = C（数值） 以及  A + B + C = n - 4 （火柴数）。
+
+只知道 0~9，后面的数用 0~9 推，必须推到每一位，一位一位累加，初始化的时候默认为 0。
+
+> 注意开始必须分配1010的空间，不能只分配10，否则访问后面的数比如num[20]就会报越界了。
+>
+> Received signal 11: Segmentation fault with invalid memory reference.
+>
+> 报错类型：段错误，访问了不该访问的内存。
+>
+> 最常见的就是数组越界。
+
+```cpp
+#include<iostream>
+
+using namespace std;
+
+const int N = 25;
+
+int n;
+int arr[N]; // 记录每个位置放的数
+int ans = 0;
+// 记录每个数用多少根火柴
+int num[1010] = {6, 2, 5, 5, 4, 5, 6, 3, 7, 6}; 
+
+// 计算当前这个位置上的数用的火柴总数
+int cal(int i) {
+    if(num[i]) return num[i]; // 如果num[i]存在，说明是0~9之间的数因为后面的初始化默认为0了
+    else {
+        int sum = 0;
+        while(i) {
+            sum += num[i % 10]; // 从个位数开始一位一位的算火柴数
+            i /= 10;
+        }
+        return sum;
+    }
+}
+
+void dfs(int x, int sum) {
+    if(sum > n) return; // 剪枝
+    
+    if(x > 3) {
+        if(arr[1] + arr[2] == arr[3] && sum == n) {
+            ans++;
+        }
+        return ;
+    }
+
+    for(int i = 0; i <= 1000; i++) {
+        arr[x] = i;
+        dfs(x + 1, sum + cal(i));
+        arr[x] = 0;
+    }
+}
+
+int main() {
+    scanf("%d", &n);
+    dfs(1, 4);
+    printf("%d\n", ans);
+    return 0;
+}
+```
+
+1000 怎么确定的？n 最大是 24，减去 4 就是 20，三个数平均下来每个数 6、7 根，最大也就 1111，所以 1000 足够覆盖所有情况。
+
+缺点：每次 dfs 都要调用 cal 函数从头计算，其实可以把已经算出来的存起来，后面的递归。
+
+------
+
+优化方法来了。**递归**计算火柴数，后面要用的时候直接查表。
+
+还是只知道 0~9，二位数用 0~9 推，推出来的存起来，三位数用 0~9 和推出来的二位数推，不用推到每一位了。
+
+```cpp
+#include<iostream>
+
+using namespace std;
+
+const int N = 25;
+
+int n;
+int arr[N]; // 记录每个位置放的数
+int ans = 0;
+// 记录每个数用多少根火柴
+int num[1010] = {6, 2, 5, 5, 4, 5, 6, 3, 7, 6}; 
+
+void dfs(int x, int sum) {
+    if(sum > n) return; // 剪枝
+    
+    if(x > 3) {
+        if(arr[1] + arr[2] == arr[3] && sum == n) {
+            ans++;
+        }
+        return ;
+    }
+
+    for(int i = 0; i < 1000; i++) {
+        arr[x] = i;
+        dfs(x + 1, sum + num[i]);
+        arr[x] = 0;
+    }
+}
+
+int main() {
+    scanf("%d", &n);
+    // 递推算10以后的火柴数（后面的直接用前面推出来的）
+    for(int i = 10; i <= 1000; i++) {
+        num[i] = num[i % 10] + num[i / 10];
+    }
+    dfs(1, 4);
+    printf("%d\n", ans);
+    return 0;
+}
+```
+
+耶！从 274 ms 降 114 ms 了，好用！
+
+
+
+# P2036 [COCI 2008/2009 #2] PERKET
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
